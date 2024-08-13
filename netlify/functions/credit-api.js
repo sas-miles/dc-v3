@@ -77,17 +77,14 @@ exports.handler = async (event) => {
   console.log("API payload:", apiPayload);
 
   try {
-    const response = await fetch(
-      "https://api.fastdebt.com/v1/verify/balance-unsecured-credit-cards",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": process.env.FASTDEBT_API_KEY, // Use environment variable for API key
-        },
-        body: JSON.stringify(apiPayload),
-      }
-    );
+    const response = await fetch("https://api.fastdebt.com/v1/verify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.FASTDEBT_API_KEY, // Use environment variable for API key
+      },
+      body: JSON.stringify(apiPayload),
+    });
 
     const result = await response.json();
     console.log("API response:", result);

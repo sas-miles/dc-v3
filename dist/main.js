@@ -198,15 +198,6 @@
     const form = document.querySelector("form");
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const stateDropdown = document.querySelector("#State-of-residence");
-      const selectedState = stateDropdown.value;
-      for (const [url, states] of Object.entries(stateRedirects)) {
-        if (states.includes(selectedState)) {
-          event.preventDefault();
-          window.location.href = url;
-          return;
-        }
-      }
       function formatPhoneNumberForAPI(phoneNumber) {
         const cleaned = ("" + phoneNumber).replace(/\D/g, "");
         const trimmed = cleaned.substring(0, 10);
@@ -234,14 +225,9 @@
         website: window.location.origin || ""
       };
       console.log("Submitting form data:", formData);
-      window.dataLayer = window.dataLayer || [];
-      window.dataLayer.push({
-        event: "formSubmission",
-        formData
-      });
       try {
         const response = await fetch(
-          "https://credit-api.netlify.app/.netlify/functions/credit-api",
+          "https://mlr-dev-dc.netlify.app/.netlify/functions/credit-api",
           {
             method: "POST",
             headers: {
@@ -252,6 +238,19 @@
         );
         const result = await response.json();
         console.log("Serverless function response:", result);
+        if (result.data) {
+          document.getElementById("balance_unsecured_accounts").value = result.data.balance_unsecured_accounts || "";
+          document.getElementById("balance_unsecured_credit_cards").value = result.data.balance_unsecured_credit_cards || "";
+          document.getElementById("creditScore").value = result.data.creditScore || "";
+        }
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+          event: "creditFormSubmission",
+          balance_unsecured_accounts: result.data.balance_unsecured_accounts || "N/A",
+          balance_unsecured_credit_cards: result.data.balance_unsecured_credit_cards || "N/A",
+          creditScore: result.data.creditScore || "N/A",
+          formData
+        });
         if (result.data && result.data.balance_unsecured_credit_cards && result.data.balance_unsecured_credit_cards.max > 9999) {
           window.dataLayer = window.dataLayer || [];
           window.dataLayer.push({
@@ -259,7 +258,7 @@
             event_category: "engagement",
             event_label: "High Unsecured Credit Card Balance"
           });
-          window.location.href = "/thank-you-debtcom";
+          alert("High Unsecured Credit Card Balance");
         } else {
           window.dataLayer = window.dataLayer || [];
           window.dataLayer.push({
@@ -267,7 +266,7 @@
             event_category: "engagement",
             event_label: "Low Unsecured Credit Card Balance"
           });
-          window.location.href = "/thank-you-cc";
+          alert("Low Unsecured Credit Card Balance");
         }
       } catch (error) {
         console.error("Error:", error);
@@ -323,7 +322,7 @@
             console.log("Validating phone number:", phoneNumber);
             try {
               const response = await fetch(
-                `https://credit-api.netlify.app/.netlify/functions/validate-phone?phoneNumber=${encodeURIComponent(phoneNumber)}`
+                `https://mlr-dev-dc.netlify.app/.netlify/functions/validate-phone?phoneNumber=${encodeURIComponent(phoneNumber)}`
               );
               const data = await response.json();
               console.log("Response data:", data);
