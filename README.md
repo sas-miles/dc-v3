@@ -1,7 +1,7 @@
-Webflow Starter
-Vite 
-Vanilla JS
+Front-end: Webflow
+Serverless Functions: Netlify
+Mobile Phone Validation: Twilio
+Address Auto Fill: Radar
+Credit Utilization: Fastdebt API
 
-Dev and Prod workflow based on Finsweet Dev Starter. 
-
-More documentation to come...
+To be used with Google Tag Manager, Pixel, and Zapier
