@@ -327,8 +327,6 @@ window.Webflow.push(async () => {
   /**
    * FORM SUBMISSION LISTENER
    */
-  const zapierWebhookUrl =
-    "https://hooks.zapier.com/hooks/catch/11141207/24cmd1k/";
   const form = document.querySelector("form");
   form.addEventListener("submit", async (event) => {
     // Prevent the form from submitting initially

@@ -196,7 +196,6 @@
     updateProgress(1, totalSteps);
     const firstStep = formSteps[0];
     firstStep.style.display = "flex";
-    const zapierWebhookUrl = "https://hooks.zapier.com/hooks/catch/11141207/24cmd1k/";
     const form = document.querySelector("form");
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
