@@ -5,6 +5,7 @@
   // src/main.js
   window.Webflow ||= [];
   window.Webflow.push(async () => {
+    let isApiDataReady = false;
     const validationRules = {
       "#First-Name": validateNameField,
       "#Last-Name": validateNameField,
@@ -198,6 +199,7 @@
     const form = document.querySelector("form");
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
+      let isApiDataReady2 = false;
       function formatPhoneNumberForAPI(phoneNumber) {
         const cleaned = ("" + phoneNumber).replace(/\D/g, "");
         const trimmed = cleaned.substring(0, 10);
@@ -237,20 +239,22 @@
         );
         const result = await response.json();
         console.log("Serverless function response:", result);
-        if (result.data) {
-          document.getElementById("balance_unsecured_accounts").value = result.data.balance_unsecured_accounts || "";
-          document.getElementById("balance_unsecured_credit_cards").value = result.data.balance_unsecured_credit_cards || "";
-          document.getElementById("creditScore").value = result.data.creditScore || "";
+        const data = result.result?.data;
+        if (data) {
+          document.getElementById("balance_unsecured_accounts").value = data.balance_unsecured_accounts?.max?.toString() ?? "";
+          document.getElementById("balance_unsecured_credit_cards").value = data.balance_unsecured_credit_cards?.max?.toString() ?? "";
+          document.getElementById("creditScore").value = data.creditScore?.max?.toString() ?? "";
         }
         window.dataLayer = window.dataLayer || [];
         window.dataLayer.push({
           event: "creditFormSubmission",
-          balance_unsecured_accounts: result.data.balance_unsecured_accounts || "N/A",
-          balance_unsecured_credit_cards: result.data.balance_unsecured_credit_cards || "N/A",
-          creditScore: result.data.creditScore || "N/A",
+          balance_unsecured_accounts: data?.balance_unsecured_accounts?.max?.toString() ?? "N/A",
+          balance_unsecured_credit_cards: data?.balance_unsecured_credit_cards?.max?.toString() ?? "N/A",
+          creditScore: data?.creditScore?.max?.toString() ?? "N/A",
           formData
         });
-        if (result.data && result.data.balance_unsecured_credit_cards && result.data.balance_unsecured_credit_cards.max > 9999) {
+        isApiDataReady2 = true;
+        if (data?.balance_unsecured_credit_cards?.max > 9999) {
           window.dataLayer.push({
             event: "custom_conversion",
             event_category: "engagement",
@@ -265,7 +269,9 @@
           });
           window.location.href = "/thank-you-cc";
         }
-        form.submit();
+        if (isApiDataReady2) {
+          form.submit();
+        }
       } catch (error) {
         console.error("Error:", error);
       }

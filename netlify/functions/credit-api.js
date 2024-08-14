@@ -92,10 +92,11 @@ exports.handler = async (event) => {
     // Prepare data for Zapier
     const extendedFormData = {
       ...requestBody,
-      balance_unsecured_accounts: result.data.balance_unsecured_accounts || "",
+      balance_unsecured_accounts:
+        result.data.balance_unsecured_accounts?.max || "",
       balance_unsecured_credit_cards:
-        result.data.balance_unsecured_credit_cards || "",
-      creditScore: result.data.creditScore || "",
+        result.data.balance_unsecured_credit_cards?.max || "",
+      creditScore: result.data.creditScore?.max || "",
     };
 
     // Send the data to Zapier

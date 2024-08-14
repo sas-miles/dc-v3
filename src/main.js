@@ -1,5 +1,6 @@
 window.Webflow ||= [];
 window.Webflow.push(async () => {
+  let isApiDataReady = false;
   /*** FORM VALIDATION ***/
   const validationRules = {
     "#First-Name": validateNameField,
@@ -331,6 +332,9 @@ window.Webflow.push(async () => {
     // Prevent the form from submitting initially
     event.preventDefault();
 
+    // Flag to track whether the API data has been received and hidden fields are populated
+    let isApiDataReady = false;
+
     // Helper function to format phone number for API
     function formatPhoneNumberForAPI(phoneNumber) {
       const cleaned = ("" + phoneNumber).replace(/\D/g, "");
@@ -383,14 +387,14 @@ window.Webflow.push(async () => {
       const result = await response.json();
       console.log("Serverless function response:", result);
 
-      // Populate hidden fields with data from the API response
-      if (result.data) {
+      const data = result.result?.data;
+      if (data) {
         document.getElementById("balance_unsecured_accounts").value =
-          result.data.balance_unsecured_accounts || "";
+          data.balance_unsecured_accounts?.max?.toString() ?? "";
         document.getElementById("balance_unsecured_credit_cards").value =
-          result.data.balance_unsecured_credit_cards || "";
+          data.balance_unsecured_credit_cards?.max?.toString() ?? "";
         document.getElementById("creditScore").value =
-          result.data.creditScore || "";
+          data.creditScore?.max?.toString() ?? "";
       }
 
       // Push data to Google Tag Manager
@@ -398,19 +402,18 @@ window.Webflow.push(async () => {
       window.dataLayer.push({
         event: "creditFormSubmission",
         balance_unsecured_accounts:
-          result.data.balance_unsecured_accounts || "N/A",
+          data?.balance_unsecured_accounts?.max?.toString() ?? "N/A",
         balance_unsecured_credit_cards:
-          result.data.balance_unsecured_credit_cards || "N/A",
-        creditScore: result.data.creditScore || "N/A",
+          data?.balance_unsecured_credit_cards?.max?.toString() ?? "N/A",
+        creditScore: data?.creditScore?.max?.toString() ?? "N/A",
         formData: formData,
       });
 
+      // Set the flag to indicate that API data is ready
+      isApiDataReady = true;
+
       // Trigger Google Tag Manager events and redirect after form data is ready
-      if (
-        result.data &&
-        result.data.balance_unsecured_credit_cards &&
-        result.data.balance_unsecured_credit_cards.max > 9999
-      ) {
+      if (data?.balance_unsecured_credit_cards?.max > 9999) {
         window.dataLayer.push({
           event: "custom_conversion",
           event_category: "engagement",
@@ -428,7 +431,10 @@ window.Webflow.push(async () => {
         window.location.href = "/thank-you-cc";
       }
 
-      form.submit();
+      // Manually submit the form after the API data is ready
+      if (isApiDataReady) {
+        form.submit();
+      }
     } catch (error) {
       console.error("Error:", error);
     }
