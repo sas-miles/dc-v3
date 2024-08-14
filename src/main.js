@@ -1,5 +1,6 @@
 window.Webflow ||= [];
 window.Webflow.push(async () => {
+  let isApiDataReady = false;
   /*** FORM VALIDATION ***/
   const validationRules = {
     "#First-Name": validateNameField,
@@ -326,29 +327,20 @@ window.Webflow.push(async () => {
   /**
    * FORM SUBMISSION LISTENER
    */
+  const zapierWebhookUrl =
+    "https://hooks.zapier.com/hooks/catch/11141207/24cmd1k/";
   const form = document.querySelector("form");
   form.addEventListener("submit", async (event) => {
+    // Prevent the form from submitting initially
     event.preventDefault();
 
-    // const stateDropdown = document.querySelector("#State-of-residence");
-    // const selectedState = stateDropdown.value;
-
-    // for (const [url, states] of Object.entries(stateRedirects)) {
-    //   if (states.includes(selectedState)) {
-    //     event.preventDefault(); // Prevent the form from submitting
-    //     window.location.href = url; // Redirect to the custom URL for the selected state group
-    //     // break; // Exit the loop once a match is found
-    //     return;
-    //   }
-    // }
+    // Flag to track whether the API data has been received and hidden fields are populated
+    let isApiDataReady = false;
 
     // Helper function to format phone number for API
     function formatPhoneNumberForAPI(phoneNumber) {
-      // Remove all non-digit characters
       const cleaned = ("" + phoneNumber).replace(/\D/g, "");
-      // Ensure the number is trimmed to 10 digits maximum
       const trimmed = cleaned.substring(0, 10);
-      // Format the number as +1XXXYYYZZZZ
       return `+1${trimmed}`;
     }
 
@@ -370,7 +362,7 @@ window.Webflow.push(async () => {
             document.getElementById("Phone-Number").value || ""
           )
         : "",
-      dob: formatDateOfBirthForAPI(document.getElementById("DOB").value || ""), // Ensure this is in "yyyy-mm-dd" format
+      dob: formatDateOfBirthForAPI(document.getElementById("DOB").value || ""),
       address: {
         street: document.getElementById("Street-Address").value || "",
         city: document.getElementById("City").value || "",
@@ -419,34 +411,30 @@ window.Webflow.push(async () => {
         formData: formData,
       });
 
-      // Trigger Google Tag Manager events
+      // Trigger Google Tag Manager events and redirect after form data is ready
       if (
         result.data &&
         result.data.balance_unsecured_credit_cards &&
         result.data.balance_unsecured_credit_cards.max > 9999
       ) {
-        // Trigger custom conversion for Google Tag Manager
-        window.dataLayer = window.dataLayer || [];
         window.dataLayer.push({
           event: "custom_conversion",
           event_category: "engagement",
           event_label: "High Unsecured Credit Card Balance",
         });
 
-        // window.location.href = "/thank-you-debtcom";
-        alert("High Unsecured Credit Card Balance");
+        window.location.href = "/thank-you-debtcom";
       } else {
-        // Trigger custom event for lower credit card balance
-        window.dataLayer = window.dataLayer || [];
         window.dataLayer.push({
           event: "custom_conversion",
           event_category: "engagement",
           event_label: "Low Unsecured Credit Card Balance",
         });
 
-        // window.location.href = "/thank-you-cc";
-        alert("Low Unsecured Credit Card Balance");
+        window.location.href = "/thank-you-cc";
       }
+
+      form.submit();
     } catch (error) {
       console.error("Error:", error);
     }

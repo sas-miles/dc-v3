@@ -5,6 +5,7 @@
   // src/main.js
   window.Webflow ||= [];
   window.Webflow.push(async () => {
+    let isApiDataReady = false;
     const validationRules = {
       "#First-Name": validateNameField,
       "#Last-Name": validateNameField,
@@ -195,9 +196,11 @@
     updateProgress(1, totalSteps);
     const firstStep = formSteps[0];
     firstStep.style.display = "flex";
+    const zapierWebhookUrl = "https://hooks.zapier.com/hooks/catch/11141207/24cmd1k/";
     const form = document.querySelector("form");
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
+      let isApiDataReady2 = false;
       function formatPhoneNumberForAPI(phoneNumber) {
         const cleaned = ("" + phoneNumber).replace(/\D/g, "");
         const trimmed = cleaned.substring(0, 10);
@@ -215,7 +218,6 @@
           document.getElementById("Phone-Number").value || ""
         ) : "",
         dob: formatDateOfBirthForAPI(document.getElementById("DOB").value || ""),
-        // Ensure this is in "yyyy-mm-dd" format
         address: {
           street: document.getElementById("Street-Address").value || "",
           city: document.getElementById("City").value || "",
@@ -252,22 +254,21 @@
           formData
         });
         if (result.data && result.data.balance_unsecured_credit_cards && result.data.balance_unsecured_credit_cards.max > 9999) {
-          window.dataLayer = window.dataLayer || [];
           window.dataLayer.push({
             event: "custom_conversion",
             event_category: "engagement",
             event_label: "High Unsecured Credit Card Balance"
           });
-          alert("High Unsecured Credit Card Balance");
+          window.location.href = "/thank-you-debtcom";
         } else {
-          window.dataLayer = window.dataLayer || [];
           window.dataLayer.push({
             event: "custom_conversion",
             event_category: "engagement",
             event_label: "Low Unsecured Credit Card Balance"
           });
-          alert("Low Unsecured Credit Card Balance");
+          window.location.href = "/thank-you-cc";
         }
+        form.submit();
       } catch (error) {
         console.error("Error:", error);
       }

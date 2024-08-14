@@ -89,10 +89,31 @@ exports.handler = async (event) => {
     const result = await response.json();
     console.log("API response:", result);
 
+    // Prepare data for Zapier
+    const extendedFormData = {
+      ...requestBody,
+      balance_unsecured_accounts: result.data.balance_unsecured_accounts || "",
+      balance_unsecured_credit_cards:
+        result.data.balance_unsecured_credit_cards || "",
+      creditScore: result.data.creditScore || "",
+    };
+
+    // Send the data to Zapier
+    const zapierResponse = await fetch(process.env.ZAPIER_WEBHOOK_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(extendedFormData),
+    });
+
+    const zapierResult = await zapierResponse.json();
+    console.log("Zapier response:", zapierResult);
+
     return {
       statusCode: 200,
       headers: corsHeaders,
-      body: JSON.stringify(result),
+      body: JSON.stringify({ result, zapierResult }),
     };
   } catch (error) {
     console.error(`Error during API request: ${error.message}`);
