@@ -404,21 +404,40 @@ window.Webflow.push(async () => {
         formData: formData,
       });
 
-      // Determine redirection based on credit card balance
+      const redirectUrlHigh = form.getAttribute("redirect-url-high");
+      const redirectUrlLow = form.getAttribute("redirect-url-low");
+
+      let redirectUrl;
       if (result.balance_unsecured_credit_cards?.max > 9999) {
         window.dataLayer.push({
           event: "custom_conversion",
           event_category: "engagement",
           event_label: "High Unsecured Credit Card Balance",
         });
-        window.location.href = "/thank-you-debtcom";
+        redirectUrl = redirectUrlHigh;
       } else {
         window.dataLayer.push({
           event: "custom_conversion",
           event_category: "engagement",
           event_label: "Low Unsecured Credit Card Balance",
         });
-        window.location.href = "/thank-you-cc";
+        redirectUrl = redirectUrlLow;
+      }
+
+      // Perform the redirect
+      if (redirectUrl) {
+        // Check if it's a full URL or just a slug
+        if (
+          redirectUrl.startsWith("http://") ||
+          redirectUrl.startsWith("https://")
+        ) {
+          window.location.href = redirectUrl;
+        } else {
+          // If it's a slug, prepend the current origin
+          window.location.href = `${window.location.origin}${redirectUrl.startsWith("/") ? "" : "/"}${redirectUrl}`;
+        }
+      } else {
+        console.error("No redirect URL specified");
       }
     } catch (error) {
       console.error("Error:", error);
