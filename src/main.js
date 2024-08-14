@@ -1,6 +1,5 @@
 window.Webflow ||= [];
 window.Webflow.push(async () => {
-  let isApiDataReady = false;
   /*** FORM VALIDATION ***/
   const validationRules = {
     "#First-Name": validateNameField,
@@ -331,9 +330,6 @@ window.Webflow.push(async () => {
   form.addEventListener("submit", async (event) => {
     // Prevent the form from submitting initially
     event.preventDefault();
-
-    // Flag to track whether the API data has been received and hidden fields are populated
-    let isApiDataReady = false;
 
     // Helper function to format phone number for API
     function formatPhoneNumberForAPI(phoneNumber) {

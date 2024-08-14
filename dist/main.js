@@ -5,7 +5,6 @@
   // src/main.js
   window.Webflow ||= [];
   window.Webflow.push(async () => {
-    let isApiDataReady = false;
     const validationRules = {
       "#First-Name": validateNameField,
       "#Last-Name": validateNameField,
@@ -199,7 +198,6 @@
     const form = document.querySelector("form");
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
-      let isApiDataReady2 = false;
       function formatPhoneNumberForAPI(phoneNumber) {
         const cleaned = ("" + phoneNumber).replace(/\D/g, "");
         const trimmed = cleaned.substring(0, 10);
