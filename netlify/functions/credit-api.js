@@ -81,31 +81,29 @@ exports.handler = async (event) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": process.env.FASTDEBT_API_KEY, // Use environment variable for API key
+        "x-api-key": process.env.FASTDEBT_API_KEY,
       },
       body: JSON.stringify(apiPayload),
     });
 
     const result = await response.json();
-    console.log("API response:", result);
+    console.log("FastDebt API response:", result);
 
     // Prepare data for Zapier
-    const extendedFormData = {
-      ...requestBody,
-      balance_unsecured_accounts:
-        result.data.balance_unsecured_accounts?.max || "",
+    const relevantData = {
+      balance_unsecured_accounts: result.data.balance_unsecured_accounts,
       balance_unsecured_credit_cards:
-        result.data.balance_unsecured_credit_cards?.max || "",
-      creditScore: result.data.creditScore?.max || "",
+        result.data.balance_unsecured_credit_cards,
+      creditScore: result.data.creditScore,
     };
 
-    // Send the data to Zapier
+    // Send data to Zapier
     const zapierResponse = await fetch(process.env.ZAPIER_WEBHOOK_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(extendedFormData),
+      body: JSON.stringify({ ...requestBody, ...relevantData }),
     });
 
     const zapierResult = await zapierResponse.json();
@@ -114,7 +112,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       headers: corsHeaders,
-      body: JSON.stringify({ result, zapierResult }),
+      body: JSON.stringify({ result: relevantData, zapierResult }),
     };
   } catch (error) {
     console.error(`Error during API request: ${error.message}`);

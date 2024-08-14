@@ -199,7 +199,6 @@
     const form = document.querySelector("form");
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
-      let isApiDataReady2 = false;
       function formatPhoneNumberForAPI(phoneNumber) {
         const cleaned = ("" + phoneNumber).replace(/\D/g, "");
         const trimmed = cleaned.substring(0, 10);
@@ -237,24 +236,21 @@
             body: JSON.stringify(formData)
           }
         );
-        const result = await response.json();
-        console.log("Serverless function response:", result);
-        const data = result.result?.data;
-        if (data) {
-          document.getElementById("balance_unsecured_accounts").value = data.balance_unsecured_accounts?.max?.toString() ?? "";
-          document.getElementById("balance_unsecured_credit_cards").value = data.balance_unsecured_credit_cards?.max?.toString() ?? "";
-          document.getElementById("creditScore").value = data.creditScore?.max?.toString() ?? "";
-        }
+        const { result, zapierResult } = await response.json();
+        console.log("Credit API response:", result);
+        console.log("Zapier response:", zapierResult);
+        document.getElementById("balance_unsecured_accounts").value = result.balance_unsecured_accounts?.max?.toString() || "";
+        document.getElementById("balance_unsecured_credit_cards").value = result.balance_unsecured_credit_cards?.max?.toString() || "";
+        document.getElementById("creditScore").value = result.creditScore?.max?.toString() || "";
         window.dataLayer = window.dataLayer || [];
         window.dataLayer.push({
           event: "creditFormSubmission",
-          balance_unsecured_accounts: data?.balance_unsecured_accounts?.max?.toString() ?? "N/A",
-          balance_unsecured_credit_cards: data?.balance_unsecured_credit_cards?.max?.toString() ?? "N/A",
-          creditScore: data?.creditScore?.max?.toString() ?? "N/A",
+          balance_unsecured_accounts: result.balance_unsecured_accounts?.max || "N/A",
+          balance_unsecured_credit_cards: result.balance_unsecured_credit_cards?.max || "N/A",
+          creditScore: result.creditScore?.max || "N/A",
           formData
         });
-        isApiDataReady2 = true;
-        if (data?.balance_unsecured_credit_cards?.max > 9999) {
+        if (result.balance_unsecured_credit_cards?.max > 9999) {
           window.dataLayer.push({
             event: "custom_conversion",
             event_category: "engagement",
@@ -268,9 +264,6 @@
             event_label: "Low Unsecured Credit Card Balance"
           });
           window.location.href = "/thank-you-cc";
-        }
-        if (isApiDataReady2) {
-          form.submit();
         }
       } catch (error) {
         console.error("Error:", error);

@@ -329,11 +329,7 @@ window.Webflow.push(async () => {
    */
   const form = document.querySelector("form");
   form.addEventListener("submit", async (event) => {
-    // Prevent the form from submitting initially
     event.preventDefault();
-
-    // Flag to track whether the API data has been received and hidden fields are populated
-    let isApiDataReady = false;
 
     // Helper function to format phone number for API
     function formatPhoneNumberForAPI(phoneNumber) {
@@ -384,42 +380,37 @@ window.Webflow.push(async () => {
         }
       );
 
-      const result = await response.json();
-      console.log("Serverless function response:", result);
+      const { result, zapierResult } = await response.json();
+      console.log("Credit API response:", result);
+      console.log("Zapier response:", zapierResult);
 
-      const data = result.result?.data;
-      if (data) {
-        document.getElementById("balance_unsecured_accounts").value =
-          data.balance_unsecured_accounts?.max?.toString() ?? "";
-        document.getElementById("balance_unsecured_credit_cards").value =
-          data.balance_unsecured_credit_cards?.max?.toString() ?? "";
-        document.getElementById("creditScore").value =
-          data.creditScore?.max?.toString() ?? "";
-      }
+      // Update hidden fields
+      document.getElementById("balance_unsecured_accounts").value =
+        result.balance_unsecured_accounts?.max?.toString() || "";
+      document.getElementById("balance_unsecured_credit_cards").value =
+        result.balance_unsecured_credit_cards?.max?.toString() || "";
+      document.getElementById("creditScore").value =
+        result.creditScore?.max?.toString() || "";
 
       // Push data to Google Tag Manager
       window.dataLayer = window.dataLayer || [];
       window.dataLayer.push({
         event: "creditFormSubmission",
         balance_unsecured_accounts:
-          data?.balance_unsecured_accounts?.max?.toString() ?? "N/A",
+          result.balance_unsecured_accounts?.max || "N/A",
         balance_unsecured_credit_cards:
-          data?.balance_unsecured_credit_cards?.max?.toString() ?? "N/A",
-        creditScore: data?.creditScore?.max?.toString() ?? "N/A",
+          result.balance_unsecured_credit_cards?.max || "N/A",
+        creditScore: result.creditScore?.max || "N/A",
         formData: formData,
       });
 
-      // Set the flag to indicate that API data is ready
-      isApiDataReady = true;
-
-      // Trigger Google Tag Manager events and redirect after form data is ready
-      if (data?.balance_unsecured_credit_cards?.max > 9999) {
+      // Determine redirection based on credit card balance
+      if (result.balance_unsecured_credit_cards?.max > 9999) {
         window.dataLayer.push({
           event: "custom_conversion",
           event_category: "engagement",
           event_label: "High Unsecured Credit Card Balance",
         });
-
         window.location.href = "/thank-you-debtcom";
       } else {
         window.dataLayer.push({
@@ -427,13 +418,7 @@ window.Webflow.push(async () => {
           event_category: "engagement",
           event_label: "Low Unsecured Credit Card Balance",
         });
-
         window.location.href = "/thank-you-cc";
-      }
-
-      // Manually submit the form after the API data is ready
-      if (isApiDataReady) {
-        form.submit();
       }
     } catch (error) {
       console.error("Error:", error);
