@@ -5,7 +5,6 @@
   // src/main.js
   window.Webflow ||= [];
   window.Webflow.push(async () => {
-    let isApiDataReady = false;
     const validationRules = {
       "#First-Name": validateNameField,
       "#Last-Name": validateNameField,
@@ -196,7 +195,7 @@
     updateProgress(1, totalSteps);
     const firstStep = formSteps[0];
     firstStep.style.display = "flex";
-    const form = document.querySelector("form");
+    const form = document.getElementById("hero-form");
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       function formatPhoneNumberForAPI(phoneNumber) {
@@ -236,24 +235,28 @@
             body: JSON.stringify(formData)
           }
         );
-        const { result, zapierResult } = await response.json();
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "API request failed");
+        }
+        const { result, zapierResult } = data;
         console.log("Credit API response:", result);
         console.log("Zapier response:", zapierResult);
-        document.getElementById("balance_unsecured_accounts").value = result.balance_unsecured_accounts?.max?.toString() || "";
-        document.getElementById("balance_unsecured_credit_cards").value = result.balance_unsecured_credit_cards?.max?.toString() || "";
-        document.getElementById("creditScore").value = result.creditScore?.max?.toString() || "";
+        document.getElementById("balance_unsecured_accounts").value = result?.balance_unsecured_accounts?.max?.toString() || "";
+        document.getElementById("balance_unsecured_credit_cards").value = result?.balance_unsecured_credit_cards?.max?.toString() || "";
+        document.getElementById("creditScore").value = result?.creditScore?.max?.toString() || "";
         window.dataLayer = window.dataLayer || [];
         window.dataLayer.push({
           event: "creditFormSubmission",
-          balance_unsecured_accounts: result.balance_unsecured_accounts?.max || "N/A",
-          balance_unsecured_credit_cards: result.balance_unsecured_credit_cards?.max || "N/A",
-          creditScore: result.creditScore?.max || "N/A",
+          balance_unsecured_accounts: result?.balance_unsecured_accounts?.max || "N/A",
+          balance_unsecured_credit_cards: result?.balance_unsecured_credit_cards?.max || "N/A",
+          creditScore: result?.creditScore?.max || "N/A",
           formData
         });
         const redirectUrlHigh = form.getAttribute("redirect-url-high");
         const redirectUrlLow = form.getAttribute("redirect-url-low");
         let redirectUrl;
-        if (result.balance_unsecured_credit_cards?.max > 9999) {
+        if (result?.balance_unsecured_credit_cards?.max > 9999) {
           window.dataLayer.push({
             event: "custom_conversion",
             event_category: "engagement",
@@ -268,19 +271,24 @@
           });
           redirectUrl = redirectUrlLow;
         }
-        if (redirectUrl) {
-          if (redirectUrl.startsWith("http://") || redirectUrl.startsWith("https://")) {
-            window.location.href = redirectUrl;
-          } else {
-            window.location.href = `${window.location.origin}${redirectUrl.startsWith("/") ? "" : "/"}${redirectUrl}`;
-          }
-        } else {
-          console.error("No redirect URL specified");
-        }
+        performRedirect(redirectUrl || redirectUrlLow);
       } catch (error) {
         console.error("Error:", error);
+        const redirectUrlLow = form.getAttribute("redirect-url-low");
+        performRedirect(redirectUrlLow);
       }
     });
+    function performRedirect(redirectUrl) {
+      if (redirectUrl) {
+        if (redirectUrl.startsWith("http://") || redirectUrl.startsWith("https://")) {
+          window.location.href = redirectUrl;
+        } else {
+          window.location.href = `${window.location.origin}${redirectUrl.startsWith("/") ? "" : "/"}${redirectUrl}`;
+        }
+      } else {
+        console.error("No redirect URL specified");
+      }
+    }
     formSteps.forEach((step) => {
       const formFields = step.querySelectorAll(".form-field");
       formFields.forEach((field) => {

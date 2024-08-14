@@ -1,6 +1,5 @@
 window.Webflow ||= [];
 window.Webflow.push(async () => {
-  let isApiDataReady = false;
   /*** FORM VALIDATION ***/
   const validationRules = {
     "#First-Name": validateNameField,
@@ -327,7 +326,7 @@ window.Webflow.push(async () => {
   /**
    * FORM SUBMISSION LISTENER
    */
-  const form = document.querySelector("form");
+  const form = document.getElementById("hero-form");
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
 
@@ -380,27 +379,33 @@ window.Webflow.push(async () => {
         }
       );
 
-      const { result, zapierResult } = await response.json();
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "API request failed");
+      }
+
+      const { result, zapierResult } = data;
       console.log("Credit API response:", result);
       console.log("Zapier response:", zapierResult);
 
       // Update hidden fields
       document.getElementById("balance_unsecured_accounts").value =
-        result.balance_unsecured_accounts?.max?.toString() || "";
+        result?.balance_unsecured_accounts?.max?.toString() || "";
       document.getElementById("balance_unsecured_credit_cards").value =
-        result.balance_unsecured_credit_cards?.max?.toString() || "";
+        result?.balance_unsecured_credit_cards?.max?.toString() || "";
       document.getElementById("creditScore").value =
-        result.creditScore?.max?.toString() || "";
+        result?.creditScore?.max?.toString() || "";
 
       // Push data to Google Tag Manager
       window.dataLayer = window.dataLayer || [];
       window.dataLayer.push({
         event: "creditFormSubmission",
         balance_unsecured_accounts:
-          result.balance_unsecured_accounts?.max || "N/A",
+          result?.balance_unsecured_accounts?.max || "N/A",
         balance_unsecured_credit_cards:
-          result.balance_unsecured_credit_cards?.max || "N/A",
-        creditScore: result.creditScore?.max || "N/A",
+          result?.balance_unsecured_credit_cards?.max || "N/A",
+        creditScore: result?.creditScore?.max || "N/A",
         formData: formData,
       });
 
@@ -408,7 +413,7 @@ window.Webflow.push(async () => {
       const redirectUrlLow = form.getAttribute("redirect-url-low");
 
       let redirectUrl;
-      if (result.balance_unsecured_credit_cards?.max > 9999) {
+      if (result?.balance_unsecured_credit_cards?.max > 9999) {
         window.dataLayer.push({
           event: "custom_conversion",
           event_category: "engagement",
@@ -424,25 +429,33 @@ window.Webflow.push(async () => {
         redirectUrl = redirectUrlLow;
       }
 
-      // Perform the redirect
-      if (redirectUrl) {
-        // Check if it's a full URL or just a slug
-        if (
-          redirectUrl.startsWith("http://") ||
-          redirectUrl.startsWith("https://")
-        ) {
-          window.location.href = redirectUrl;
-        } else {
-          // If it's a slug, prepend the current origin
-          window.location.href = `${window.location.origin}${redirectUrl.startsWith("/") ? "" : "/"}${redirectUrl}`;
-        }
-      } else {
-        console.error("No redirect URL specified");
-      }
+      performRedirect(redirectUrl || redirectUrlLow);
     } catch (error) {
       console.error("Error:", error);
+      // In case of error, redirect to the low URL
+      const redirectUrlLow = form.getAttribute("redirect-url-low");
+      performRedirect(redirectUrlLow);
     }
   });
+
+  function performRedirect(redirectUrl) {
+    if (redirectUrl) {
+      // Check if it's a full URL or just a slug
+      if (
+        redirectUrl.startsWith("http://") ||
+        redirectUrl.startsWith("https://")
+      ) {
+        window.location.href = redirectUrl;
+      } else {
+        // If it's a slug, prepend the current origin
+        window.location.href = `${window.location.origin}${
+          redirectUrl.startsWith("/") ? "" : "/"
+        }${redirectUrl}`;
+      }
+    } else {
+      console.error("No redirect URL specified");
+    }
+  }
 
   /**
    * Form Field Listeners
