@@ -16,14 +16,14 @@ exports.handler = async (event) => {
       : allowedOrigins[0],
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Max-Age": "86400", // Cache preflight request for 86400 seconds
-    "Content-Type": "application/json", // Add Content-Type header
+    "Access-Control-Max-Age": "86400",
+    "Content-Type": "application/json",
   };
 
   // Handle OPTIONS request for CORS preflight
   if (event.httpMethod === "OPTIONS") {
     return {
-      statusCode: 204, // No content response for preflight
+      statusCode: 204,
       headers: corsHeaders,
       body: "",
     };
@@ -62,8 +62,8 @@ exports.handler = async (event) => {
   }
 
   const apiPayload = {
-    customer_id: process.env.FASTDEBT_CUSTOMER_ID, // Securely use environment variable
-    customer_api_key: process.env.FASTDEBT_API_KEY, // Securely use environment variable
+    customer_id: process.env.FASTDEBT_CUSTOMER_ID,
+    customer_api_key: process.env.FASTDEBT_API_KEY,
     first_name: requestBody.first_name || "",
     last_name: requestBody.last_name || "",
     email: requestBody.email || "",
@@ -76,6 +76,9 @@ exports.handler = async (event) => {
 
   console.log("API payload:", apiPayload);
 
+  let creditApiResult = {};
+  let zapierResult = {};
+
   try {
     const response = await fetch("https://api.fastdebt.com/v1/verify", {
       method: "POST",
@@ -86,40 +89,52 @@ exports.handler = async (event) => {
       body: JSON.stringify(apiPayload),
     });
 
-    const result = await response.json();
-    console.log("FastDebt API response:", result);
+    if (!response.ok) {
+      throw new Error(`API request failed with status ${response.status}`);
+    }
 
-    // Prepare data for Zapier
-    const relevantData = {
-      balance_unsecured_accounts: result.data.balance_unsecured_accounts,
-      balance_unsecured_credit_cards:
-        result.data.balance_unsecured_credit_cards,
-      creditScore: result.data.creditScore,
-    };
+    creditApiResult = await response.json();
+    console.log("Credit API response:", creditApiResult);
+  } catch (error) {
+    console.error(`Error during Credit API request: ${error.message}`);
+    creditApiResult = { error: error.message };
+  }
 
-    // Send data to Zapier
+  // Prepare data for Zapier
+  const zapierData = {
+    ...requestBody,
+    balance_unsecured_accounts:
+      creditApiResult.data?.balance_unsecured_accounts?.max || "N/A",
+    balance_unsecured_credit_cards:
+      creditApiResult.data?.balance_unsecured_credit_cards?.max || "N/A",
+    creditScore: creditApiResult.data?.creditScore?.max || "N/A",
+    api_error: creditApiResult.error || "N/A",
+  };
+
+  // Send data to Zapier
+  try {
     const zapierResponse = await fetch(process.env.ZAPIER_WEBHOOK_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ ...requestBody, ...relevantData }),
+      body: JSON.stringify(zapierData),
     });
 
-    const zapierResult = await zapierResponse.json();
+    zapierResult = await zapierResponse.json();
     console.log("Zapier response:", zapierResult);
-
-    return {
-      statusCode: 200,
-      headers: corsHeaders,
-      body: JSON.stringify({ result: relevantData, zapierResult }),
-    };
-  } catch (error) {
-    console.error(`Error during API request: ${error.message}`);
-    return {
-      statusCode: 500,
-      headers: corsHeaders,
-      body: JSON.stringify({ error: error.message }),
-    };
+  } catch (zapierError) {
+    console.error("Error submitting to Zapier:", zapierError);
+    zapierResult = { error: zapierError.message };
   }
+
+  return {
+    statusCode: 200,
+    headers: corsHeaders,
+    body: JSON.stringify({
+      result: creditApiResult.data || {},
+      zapierResult,
+      error: creditApiResult.error || null,
+    }),
+  };
 };

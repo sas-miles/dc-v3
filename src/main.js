@@ -385,9 +385,13 @@ window.Webflow.push(async () => {
         throw new Error(data.error || "API request failed");
       }
 
-      const { result, zapierResult } = data;
+      const { result, zapierResult, error } = data;
       console.log("Credit API response:", result);
       console.log("Zapier response:", zapierResult);
+
+      if (error) {
+        console.error("Credit API error:", error);
+      }
 
       // Update hidden fields
       document.getElementById("balance_unsecured_accounts").value =
@@ -397,9 +401,8 @@ window.Webflow.push(async () => {
       document.getElementById("creditScore").value =
         result?.creditScore?.max?.toString() || "";
 
-      // Push data to Google Tag Manager
-      window.dataLayer = window.dataLayer || [];
-      window.dataLayer.push({
+      // Prepare data for Google Tag Manager
+      const gtmData = {
         event: "creditFormSubmission",
         balance_unsecured_accounts:
           result?.balance_unsecured_accounts?.max || "N/A",
@@ -407,7 +410,13 @@ window.Webflow.push(async () => {
           result?.balance_unsecured_credit_cards?.max || "N/A",
         creditScore: result?.creditScore?.max || "N/A",
         formData: formData,
-      });
+        api_error: error || "N/A",
+        zapier_error: zapierResult.error || "N/A",
+      };
+
+      // Push data to Google Tag Manager
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push(gtmData);
 
       const redirectUrlHigh = form.getAttribute("redirect-url-high");
       const redirectUrlLow = form.getAttribute("redirect-url-low");
@@ -432,7 +441,13 @@ window.Webflow.push(async () => {
       performRedirect(redirectUrl || redirectUrlLow);
     } catch (error) {
       console.error("Error:", error);
-      // In case of error, redirect to the low URL
+      // In case of error, push error data to GTM and redirect to the low URL
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: "creditFormSubmission",
+        error: error.message,
+        formData: formData,
+      });
       const redirectUrlLow = form.getAttribute("redirect-url-low");
       performRedirect(redirectUrlLow);
     }

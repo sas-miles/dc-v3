@@ -239,20 +239,26 @@
         if (!response.ok) {
           throw new Error(data.error || "API request failed");
         }
-        const { result, zapierResult } = data;
+        const { result, zapierResult, error } = data;
         console.log("Credit API response:", result);
         console.log("Zapier response:", zapierResult);
+        if (error) {
+          console.error("Credit API error:", error);
+        }
         document.getElementById("balance_unsecured_accounts").value = result?.balance_unsecured_accounts?.max?.toString() || "";
         document.getElementById("balance_unsecured_credit_cards").value = result?.balance_unsecured_credit_cards?.max?.toString() || "";
         document.getElementById("creditScore").value = result?.creditScore?.max?.toString() || "";
-        window.dataLayer = window.dataLayer || [];
-        window.dataLayer.push({
+        const gtmData = {
           event: "creditFormSubmission",
           balance_unsecured_accounts: result?.balance_unsecured_accounts?.max || "N/A",
           balance_unsecured_credit_cards: result?.balance_unsecured_credit_cards?.max || "N/A",
           creditScore: result?.creditScore?.max || "N/A",
-          formData
-        });
+          formData,
+          api_error: error || "N/A",
+          zapier_error: zapierResult.error || "N/A"
+        };
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push(gtmData);
         const redirectUrlHigh = form.getAttribute("redirect-url-high");
         const redirectUrlLow = form.getAttribute("redirect-url-low");
         let redirectUrl;
@@ -274,6 +280,12 @@
         performRedirect(redirectUrl || redirectUrlLow);
       } catch (error) {
         console.error("Error:", error);
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+          event: "creditFormSubmission",
+          error: error.message,
+          formData
+        });
         const redirectUrlLow = form.getAttribute("redirect-url-low");
         performRedirect(redirectUrlLow);
       }
