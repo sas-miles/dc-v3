@@ -1,5 +1,37 @@
 const fetch = require("node-fetch");
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1 second
+
+async function fetchWithRetry(url, options, retries = MAX_RETRIES) {
+  try {
+    const response = await fetch(url, options);
+
+    if (response.status === 429 && retries > 0) {
+      console.log(
+        `Rate limited. Retrying in ${RETRY_DELAY}ms... (${retries} retries left)`
+      );
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
+      return fetchWithRetry(url, options, retries - 1);
+    }
+
+    if (!response.ok) {
+      throw new Error(`API request failed with status ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (retries > 0) {
+      console.log(
+        `Error occurred. Retrying in ${RETRY_DELAY}ms... (${retries} retries left)`
+      );
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
+      return fetchWithRetry(url, options, retries - 1);
+    }
+    throw error;
+  }
+}
+
 exports.handler = async (event) => {
   console.log("Incoming request:", event);
 
@@ -9,7 +41,6 @@ exports.handler = async (event) => {
 
   const origin = event.headers.origin || "";
 
-  // Define CORS headers for cross-origin requests
   const corsHeaders = {
     "Access-Control-Allow-Origin": allowedOrigins.includes(origin)
       ? origin
@@ -20,7 +51,6 @@ exports.handler = async (event) => {
     "Content-Type": "application/json",
   };
 
-  // Handle OPTIONS request for CORS preflight
   if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 204,
@@ -29,7 +59,6 @@ exports.handler = async (event) => {
     };
   }
 
-  // Parse the request body
   let requestBody;
   try {
     requestBody = JSON.parse(event.body);
@@ -43,7 +72,6 @@ exports.handler = async (event) => {
     };
   }
 
-  // Ensure required fields are present
   const requiredFields = [
     "first_name",
     "last_name",
@@ -80,27 +108,24 @@ exports.handler = async (event) => {
   let zapierResult = {};
 
   try {
-    const response = await fetch("https://api.fastdebt.com/v1/verify", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": process.env.FASTDEBT_API_KEY,
-      },
-      body: JSON.stringify(apiPayload),
-    });
+    creditApiResult = await fetchWithRetry(
+      "https://api.fastdebt.com/v1/verify",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": process.env.FASTDEBT_API_KEY,
+        },
+        body: JSON.stringify(apiPayload),
+      }
+    );
 
-    if (!response.ok) {
-      throw new Error(`API request failed with status ${response.status}`);
-    }
-
-    creditApiResult = await response.json();
     console.log("Credit API response:", creditApiResult);
   } catch (error) {
     console.error(`Error during Credit API request: ${error.message}`);
     creditApiResult = { error: error.message };
   }
 
-  // Prepare data for Zapier
   const zapierData = {
     ...requestBody,
     balance_unsecured_accounts:
@@ -111,9 +136,8 @@ exports.handler = async (event) => {
     api_error: creditApiResult.error || "N/A",
   };
 
-  // Send data to Zapier
   try {
-    const zapierResponse = await fetch(process.env.ZAPIER_WEBHOOK_URL, {
+    zapierResult = await fetchWithRetry(process.env.ZAPIER_WEBHOOK_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -121,7 +145,6 @@ exports.handler = async (event) => {
       body: JSON.stringify(zapierData),
     });
 
-    zapierResult = await zapierResponse.json();
     console.log("Zapier response:", zapierResult);
   } catch (zapierError) {
     console.error("Error submitting to Zapier:", zapierError);

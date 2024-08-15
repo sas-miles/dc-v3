@@ -414,40 +414,54 @@ window.Webflow.push(async () => {
         zapier_error: zapierResult.error || "N/A",
       };
 
-      // Push data to Google Tag Manager
-      window.dataLayer = window.dataLayer || [];
-      window.dataLayer.push(gtmData);
+      // Push data to Google Tag Manager if it's available
+      if (window.dataLayer) {
+        window.dataLayer.push(gtmData);
+      } else {
+        console.warn("Google Tag Manager dataLayer not found");
+      }
 
       const redirectUrlHigh = form.getAttribute("redirect-url-high");
       const redirectUrlLow = form.getAttribute("redirect-url-low");
 
       let redirectUrl;
-      if (result?.balance_unsecured_credit_cards?.max > 9999) {
-        window.dataLayer.push({
-          event: "custom_conversion",
-          event_category: "engagement",
-          event_label: "High Unsecured Credit Card Balance",
-        });
+      const highBalanceThreshold = 9999; // You can adjust this threshold as needed
+      const balance = result?.balance_unsecured_credit_cards?.max;
+
+      if (typeof balance === "number" && balance > highBalanceThreshold) {
         redirectUrl = redirectUrlHigh;
+        // Push to GTM if available, but don't rely on it for redirection
+        if (window.dataLayer) {
+          window.dataLayer.push({
+            event: "custom_conversion",
+            event_category: "engagement",
+            event_label: "High Unsecured Credit Card Balance",
+          });
+        }
       } else {
-        window.dataLayer.push({
-          event: "custom_conversion",
-          event_category: "engagement",
-          event_label: "Low Unsecured Credit Card Balance",
-        });
         redirectUrl = redirectUrlLow;
+        // Push to GTM if available, but don't rely on it for redirection
+        if (window.dataLayer) {
+          window.dataLayer.push({
+            event: "custom_conversion",
+            event_category: "engagement",
+            event_label: "Low Unsecured Credit Card Balance",
+          });
+        }
       }
 
+      // Perform the redirect
       performRedirect(redirectUrl || redirectUrlLow);
     } catch (error) {
       console.error("Error:", error);
-      // In case of error, push error data to GTM and redirect to the low URL
-      window.dataLayer = window.dataLayer || [];
-      window.dataLayer.push({
-        event: "creditFormSubmission",
-        error: error.message,
-        formData: formData,
-      });
+      // In case of error, attempt to push error data to GTM and redirect to the low URL
+      if (window.dataLayer) {
+        window.dataLayer.push({
+          event: "creditFormSubmission",
+          error: error.message,
+          formData: formData,
+        });
+      }
       const redirectUrlLow = form.getAttribute("redirect-url-low");
       performRedirect(redirectUrlLow);
     }
