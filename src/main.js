@@ -369,7 +369,7 @@ window.Webflow.push(async () => {
 
     try {
       const response = await fetch(
-        "https://mlr-dev-dc.netlify.app/.netlify/functions/credit-api",
+        "https://credit-api.netlify.app/.netlify/functions/credit-api",
         {
           method: "POST",
           headers: {
@@ -546,7 +546,7 @@ window.Webflow.push(async () => {
 
           try {
             const response = await fetch(
-              `https://mlr-dev-dc.netlify.app/.netlify/functions/validate-phone?phoneNumber=${encodeURIComponent(phoneNumber)}`
+              `https://credit-api.netlify.app/.netlify/functions/validate-phone?phoneNumber=${encodeURIComponent(phoneNumber)}`
             );
             const data = await response.json();
             console.log("Response data:", data);
