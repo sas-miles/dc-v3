@@ -109,7 +109,7 @@ exports.handler = async (event) => {
 
   try {
     creditApiResult = await fetchWithRetry(
-      "https://api.fastdebt.com/v1/verify",
+      "https://api.fastdebt.com/v1/sandbox/verify",
       {
         method: "POST",
         headers: {
