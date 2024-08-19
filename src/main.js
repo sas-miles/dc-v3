@@ -323,12 +323,57 @@ window.Webflow.push(async () => {
   const firstStep = formSteps[0];
   firstStep.style.display = "flex";
 
+  function getQueryParams() {
+    const params = {};
+    const queryString = window.location.search.substring(1);
+    const queryArray = queryString.split("&");
+    queryArray.forEach((param) => {
+      const [key, value] = param.split("=");
+      params[decodeURIComponent(key)] = decodeURIComponent(value || "");
+    });
+    return params;
+  }
+
+  // Function to populate hidden fields
+  function populateHiddenFields(params) {
+    const utmFields = {
+      utm_medium: "channeldrilldown1",
+      utm_source: "channeldrilldown2",
+      utm_campaign: "channeldrilldown3",
+      utm_content: "channeldrilldown4",
+      s4: "channeldrilldown5",
+      pid: "channeldrilldown6",
+    };
+
+    Object.entries(utmFields).forEach(([paramName, fieldName]) => {
+      if (params.hasOwnProperty(paramName)) {
+        const field = document.querySelector(`input[name="${fieldName}"]`);
+        if (field) {
+          field.value = params[paramName];
+        }
+      }
+    });
+  }
+
+  const queryParams = getQueryParams();
+  populateHiddenFields(queryParams);
+
   /**
    * FORM SUBMISSION LISTENER
    */
   const form = document.getElementById("hero-form");
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
+
+    // Define the updateHiddenField function
+    function updateHiddenField(id, value) {
+      const field = document.getElementById(id);
+      if (field) {
+        field.value = value;
+      } else {
+        console.warn(`Hidden field '${id}' not found`);
+      }
+    }
 
     // Helper function to format phone number for API
     function formatPhoneNumberForAPI(phoneNumber) {
@@ -363,6 +408,18 @@ window.Webflow.push(async () => {
         zipcode: document.getElementById("ZIP-Code").value || "",
       },
       website: window.location.origin || "",
+      channeldrilldown1:
+        document.querySelector('input[name="channeldrilldown1"]')?.value || "",
+      channeldrilldown2:
+        document.querySelector('input[name="channeldrilldown2"]')?.value || "",
+      channeldrilldown3:
+        document.querySelector('input[name="channeldrilldown3"]')?.value || "",
+      channeldrilldown4:
+        document.querySelector('input[name="channeldrilldown4"]')?.value || "",
+      channeldrilldown5:
+        document.querySelector('input[name="channeldrilldown5"]')?.value || "",
+      channeldrilldown6:
+        document.querySelector('input[name="channeldrilldown6"]')?.value || "",
     };
 
     console.log("Submitting form data:", formData); // Log the form data for debugging
@@ -394,20 +451,26 @@ window.Webflow.push(async () => {
       }
 
       // Update hidden fields
-      document.getElementById("balance_unsecured_accounts").value =
-        result?.balance_unsecured_accounts?.max?.toString() || "";
-      document.getElementById("balance_unsecured_credit_cards").value =
-        result?.balance_unsecured_credit_cards?.max?.toString() || "";
-      document.getElementById("creditScore").value =
-        result?.creditScore?.max?.toString() || "";
+      updateHiddenField(
+        "balance_unsecured_accounts",
+        result?.balance_unsecured_accounts?.max?.toString() || ""
+      );
+      updateHiddenField(
+        "balance_unsecured_credit_cards",
+        result?.balance_unsecured_credit_cards?.max?.toString() || ""
+      );
+      updateHiddenField(
+        "creditScore",
+        result?.creditScore?.max?.toString() || ""
+      );
 
       // Prepare data for Google Tag Manager
+      const balance = Number(result?.balance_unsecured_credit_cards?.max);
       const gtmData = {
         event: "creditFormSubmission",
         balance_unsecured_accounts:
           result?.balance_unsecured_accounts?.max || "N/A",
-        balance_unsecured_credit_cards:
-          result?.balance_unsecured_credit_cards?.max || "N/A",
+        balance_unsecured_credit_cards: balance || "N/A",
         creditScore: result?.creditScore?.max || "N/A",
         formData: formData,
         api_error: error || "N/A",
@@ -426,9 +489,8 @@ window.Webflow.push(async () => {
 
       let redirectUrl;
       const highBalanceThreshold = 9999; // You can adjust this threshold as needed
-      const balance = result?.balance_unsecured_credit_cards?.max;
 
-      if (typeof balance === "number" && balance > highBalanceThreshold) {
+      if (!isNaN(balance) && balance > highBalanceThreshold) {
         redirectUrl = redirectUrlHigh;
         // Push to GTM if available, but don't rely on it for redirection
         if (window.dataLayer) {
@@ -436,6 +498,7 @@ window.Webflow.push(async () => {
             event: "custom_conversion",
             event_category: "engagement",
             event_label: "High Unsecured Credit Card Balance",
+            balance_unsecured_credit_cards: balance,
           });
         }
       } else {
@@ -446,6 +509,7 @@ window.Webflow.push(async () => {
             event: "custom_conversion",
             event_category: "engagement",
             event_label: "Low Unsecured Credit Card Balance",
+            balance_unsecured_credit_cards: balance,
           });
         }
       }

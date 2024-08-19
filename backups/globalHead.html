@@ -1,0 +1,89 @@
+<!-- Google Tag Manager (noscript) -->
+<noscript
+  ><iframe
+    src="https://www.googletagmanager.com/ns.html?id=GTM-T6GRW3PP"
+    height="0"
+    width="0"
+    style="display: none; visibility: hidden"
+  ></iframe
+></noscript>
+<!-- End Google Tag Manager (noscript) -->
+<script type="text/javascript">
+  /*custom script for quiz*/
+  document.addEventListener("DOMContentLoaded", function () {
+    window.dataLayer = window.dataLayer || [];
+    let ci = localStorage.getItem("city");
+    let de = localStorage.getItem("debt");
+    let em = localStorage.getItem("email");
+    let fn = localStorage.getItem("firstName");
+    let ln = localStorage.getItem("Last-Name");
+    let pd = localStorage.getItem("How-are-you-paying-your-debt");
+    let ia = localStorage.getItem("Income-Amount");
+    let pn = localStorage.getItem("Phone-Number");
+    let sr = localStorage.getItem("State-of-residence");
+    let sa = localStorage.getItem("Street-Address");
+    let zc = localStorage.getItem("ZIP-Code");
+    if (ci) {
+      window.dataLayer.push({
+        event: "formSubmit",
+        formFields: {
+          city: ci,
+          debt: de,
+          email: em,
+          firstName: fn,
+          "Last-Name": ln,
+          "How-are-you-paying-your-debt": pd,
+          "Income-Amount": ia,
+          "Phone-Number": pn,
+          "State-of-residence": sr,
+          "Street-Address": sa,
+          "ZIP-Code": zc,
+        },
+      });
+      fbq("trackCustom", "formSubmit", {
+        formFields: {
+          city: ci,
+          debt: de,
+          email: em,
+          firstName: fn,
+          "Last-Name": ln,
+          "How-are-you-paying-your-debt": pd,
+          "Income-Amount": ia,
+          "Phone-Number": pn,
+          "State-of-residence": sr,
+          "Street-Address": sa,
+          "ZIP-Code": zc,
+        },
+      });
+    }
+
+    $(".hero-form").submit((e) => {
+      e.preventDefault();
+      const formData = Object.fromEntries(new FormData(e.target).entries());
+      if (
+        formData["Debt"] !== "0---5k" &&
+        formData["How-are-you-paying-your-debt"] !== "Not making payments" &&
+        formData["Income-Amount"] >= 15000
+      ) {
+        localStorage.setItem("city", formData["City"]);
+        localStorage.setItem("debt", formData["Debt"]);
+        localStorage.setItem("email", formData["Email"]);
+        localStorage.setItem("firstName", formData["First-Name"]);
+        localStorage.setItem("Last-Name", formData["Last-Name"]);
+        localStorage.setItem(
+          "How-are-you-paying-your-debt",
+          formData["How-are-you-paying-your-debt"]
+        );
+        localStorage.setItem("Income-Amount", formData["Income-Amount"]);
+        localStorage.setItem("Phone-Number", formData["Phone-Number"]);
+        localStorage.setItem(
+          "State-of-residence",
+          formData["State-of-residence"]
+        );
+        localStorage.setItem("Street-Address", formData["Street-Address"]);
+        localStorage.setItem("ZIP-Code", formData["ZIP-Code"]);
+      }
+      location.href = "thankyou";
+    });
+  });
+</script>

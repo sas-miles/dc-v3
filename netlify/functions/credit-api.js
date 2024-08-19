@@ -134,6 +134,12 @@ exports.handler = async (event) => {
       creditApiResult.data?.balance_unsecured_credit_cards?.max || "N/A",
     creditScore: creditApiResult.data?.creditScore?.max || "N/A",
     api_error: creditApiResult.error || "N/A",
+    channeldrilldown1: requestBody.channeldrilldown1 || "",
+    channeldrilldown2: requestBody.channeldrilldown2 || "",
+    channeldrilldown3: requestBody.channeldrilldown3 || "",
+    channeldrilldown4: requestBody.channeldrilldown4 || "",
+    channeldrilldown5: requestBody.channeldrilldown5 || "",
+    channeldrilldown6: requestBody.channeldrilldown6 || "",
   };
 
   try {
