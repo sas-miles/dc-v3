@@ -126,6 +126,17 @@ exports.handler = async (event) => {
     creditApiResult = { error: error.message };
   }
 
+  function cleanValue(value) {
+    if (typeof value === "string") {
+      // Remove any remaining curly braces and replace placeholders with 'unknown'
+      return value
+        .replace(/{{|}}/g, "")
+        .replace(/placement|campaign\.id|adset\.id|ad\.id|pid/g, "unknown");
+    }
+    return value;
+  }
+
+  // Then, when preparing the zapierData:
   const zapierData = {
     ...requestBody,
     balance_unsecured_accounts:
@@ -134,12 +145,13 @@ exports.handler = async (event) => {
       creditApiResult.data?.balance_unsecured_credit_cards?.max || "N/A",
     creditScore: creditApiResult.data?.creditScore?.max || "N/A",
     api_error: creditApiResult.error || "N/A",
-    channeldrilldown1: requestBody.channeldrilldown1 || "",
-    channeldrilldown2: requestBody.channeldrilldown2 || "",
-    channeldrilldown3: requestBody.channeldrilldown3 || "",
-    channeldrilldown4: requestBody.channeldrilldown4 || "",
-    channeldrilldown5: requestBody.channeldrilldown5 || "",
-    channeldrilldown6: requestBody.channeldrilldown6 || "",
+    // Clean the UTM fields
+    channeldrilldown1: cleanValue(requestBody.channeldrilldown1) || "",
+    channeldrilldown2: cleanValue(requestBody.channeldrilldown2) || "",
+    channeldrilldown3: cleanValue(requestBody.channeldrilldown3) || "",
+    channeldrilldown4: cleanValue(requestBody.channeldrilldown4) || "",
+    channeldrilldown5: cleanValue(requestBody.channeldrilldown5) || "",
+    channeldrilldown6: cleanValue(requestBody.channeldrilldown6) || "",
   };
 
   try {

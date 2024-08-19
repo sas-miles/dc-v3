@@ -349,7 +349,13 @@ window.Webflow.push(async () => {
       if (params.hasOwnProperty(paramName)) {
         const field = document.querySelector(`input[name="${fieldName}"]`);
         if (field) {
-          field.value = params[paramName];
+          let value = params[paramName];
+          // Replace any remaining placeholders with 'unknown'
+          value = value.replace(
+            /placement|campaign\.id|adset\.id|ad\.id|pid/g,
+            "unknown"
+          );
+          field.value = value;
         }
       }
     });
