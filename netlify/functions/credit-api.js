@@ -138,9 +138,7 @@ exports.handler = async (event) => {
 
   // Then, when preparing the zapierData:
   const zapierData = {
-    ...requestBody,
-    balance_unsecured_accounts:
-      creditApiResult.data?.balance_unsecured_accounts?.max || "N/A",
+    nts: creditApiResult.data?.balance_unsecured_accounts?.max || "N/A",
     balance_unsecured_credit_cards:
       creditApiResult.data?.balance_unsecured_credit_cards?.max || "N/A",
     creditScore: creditApiResult.data?.creditScore?.max || "N/A",
@@ -152,6 +150,8 @@ exports.handler = async (event) => {
     channeldrilldown4: cleanValue(requestBody.channeldrilldown4) || "",
     channeldrilldown5: cleanValue(requestBody.channeldrilldown5) || "",
     channeldrilldown6: cleanValue(requestBody.channeldrilldown6) || "",
+    ...requestBody,
+    balance_unsecured_accou,
   };
 
   try {

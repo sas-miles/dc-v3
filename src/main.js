@@ -8,7 +8,7 @@ window.Webflow.push(async () => {
     "#City": validateAddressField,
     "#State-of-residence": validateDropdown,
     "#ZIP-Code": validateAddressField,
-    "#Income-Amount": validateIncomeField,
+    // "#Income-Amount": validateIncomeField,
     "#DOB": validateDOB,
     "#Phone-Number": validatePhoneField,
     '[form-field="dropdown"]': validateDropdown,
@@ -187,11 +187,11 @@ window.Webflow.push(async () => {
    * @param {HTMLElement} incomeField - The income field element to validate.
    * @returns {boolean} True if the income field is valid, false otherwise.
    */
-  function validateIncomeField(incomeField) {
-    const value = incomeField.value.trim().replace(/,/g, "");
-    const regex = /^\d{4,}$/;
-    return regex.test(value);
-  }
+  // function validateIncomeField(incomeField) {
+  //   const value = incomeField.value.trim().replace(/,/g, "");
+  //   const regex = /^\d{4,}$/;
+  //   return regex.test(value);
+  // }
 
   /**
    * Validates a phone field.
@@ -605,22 +605,22 @@ window.Webflow.push(async () => {
     if (nextButton) {
       nextButton.addEventListener("click", async (event) => {
         // Check if the current step has the data-step attribute set to "income"
-        if (
-          step.hasAttribute("data-step") &&
-          step.getAttribute("data-step") === "income"
-        ) {
-          // Income step-specific logic
-          const incomeField = step.querySelector("[data-income]");
-          if (incomeField) {
-            const incomeValue = parseFloat(incomeField.value.replace(/,/g, ""));
-            if (incomeValue < 10000) {
-              // Redirect to the specified URL
-              const url = incomeField.getAttribute("data-income-link");
-              window.location.href = url;
-              return;
-            }
-          }
-        }
+        // if (
+        //   step.hasAttribute("data-step") &&
+        //   step.getAttribute("data-step") === "income"
+        // ) {
+        //   // Income step-specific logic
+        //   const incomeField = step.querySelector("[data-income]");
+        //   if (incomeField) {
+        //     const incomeValue = parseFloat(incomeField.value.replace(/,/g, ""));
+        //     if (incomeValue < 10000) {
+        //       // Redirect to the specified URL
+        //       const url = incomeField.getAttribute("data-income-link");
+        //       window.location.href = url;
+        //       return;
+        //     }
+        //   }
+        // }
         // Check if the current step has the data-twilio attribute
         if (step.hasAttribute("data-twilio")) {
           event.preventDefault();
