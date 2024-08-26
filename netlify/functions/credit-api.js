@@ -151,7 +151,7 @@ exports.handler = async (event) => {
     channeldrilldown5: cleanValue(requestBody.channeldrilldown5) || "",
     channeldrilldown6: cleanValue(requestBody.channeldrilldown6) || "",
     ...requestBody,
-    balance_unsecured_accou,
+    balance_unsecured_accounts,
   };
 
   try {

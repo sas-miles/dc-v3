@@ -196,7 +196,7 @@ window.Webflow.push(async () => {
   /**
    * Validates a phone field.
    * @param {HTMLElement} phoneField - The phone field element to validate.
-   * @returns {boolean} True if the income field is valid, false otherwise.
+   * @returns {boolean} True if the phone field is valid, false otherwise.
    */
   function validatePhoneField(phoneField) {
     const value = phoneField.value.trim().replace(/[\(\)-\s]/g, "");
@@ -747,17 +747,17 @@ window.Webflow.push(async () => {
    * @param {string} number - The number to format.
    * @returns {string} The formatted number.
    */
-  function formatNumber(number) {
-    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  }
+  // function formatNumber(number) {
+  //   return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  // }
 
-  function handleIncomeInputChange(event) {
-    const inputValue = event.target.value.replace(/,/g, "");
-    const formattedValue = formatNumber(inputValue);
-    event.target.value = formattedValue;
-  }
+  // function handleIncomeInputChange(event) {
+  //   const inputValue = event.target.value.replace(/,/g, "");
+  //   const formattedValue = formatNumber(inputValue);
+  //   event.target.value = formattedValue;
+  // }
 
-  incomeInput.addEventListener("input", handleIncomeInputChange);
+  // incomeInput.addEventListener("input", handleIncomeInputChange);
 
   /*** PHONE FORMATTING ***/
   /**
