@@ -151,7 +151,8 @@ exports.handler = async (event) => {
     channeldrilldown5: cleanValue(requestBody.channeldrilldown5) || "",
     channeldrilldown6: cleanValue(requestBody.channeldrilldown6) || "",
     ...requestBody,
-    balance_unsecured_accounts,
+    balance_unsecured_accounts:
+      creditApiResult.data?.balance_unsecured_accounts?.max || "N/A",
   };
 
   try {
